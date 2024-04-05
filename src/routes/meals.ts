@@ -90,4 +90,70 @@ export async function mealRoutes(app: FastifyInstance) {
       meal,
     })
   });
+
+  app.put("/:mealId", async (request: FastifyRequest, reply: FastifyReply) => {
+    const mealIdParamSchema = z.object({
+      mealId: z.string(),
+    });
+
+    const updateMealSchema = z.object({
+      name: z.string().optional(),
+      description: z.string().optional(),
+
+      is_in_the_diet: z.boolean().optional(),
+    });
+
+    const { mealId } = mealIdParamSchema.parse(request.params);
+    const { name, description, is_in_the_diet } = updateMealSchema.parse(request.body);
+
+    const meal = await knex("meals").where({ id: mealId }).first();
+    if (!meal) {
+      return reply.status(400).send({
+        status: "error",
+        message: "mealId not valid!",
+      })
+    };
+
+    meal.name = name ?? meal.name;
+    meal.description = description ?? meal.description;
+    meal.is_in_the_diet = is_in_the_diet ?? meal.is_in_the_diet;
+
+    const newMeal = await knex("meals")
+      .where({ id: meal.id })
+      .update(meal)
+      .returning("*");
+
+    return reply.status(200).send({
+      meal: newMeal,
+    })
+  })
+
+  app.delete("/:mealId", async (request: FastifyRequest, reply: FastifyReply) => {
+    const showAMealSchema = z.object({
+      mealId: z.string(),
+    })
+    
+    const userSessionId = request.cookies.sessionId;
+    const { mealId } = showAMealSchema.parse(request.params);
+
+    const user = await knex("users").where({ session_id: userSessionId }).first();
+    if (!user) {
+      return reply.status(400).send({
+        status: "error",
+        message: "sessionId cookie not valid!",
+      })
+    };
+
+    const mealIsValid = await knex("meals").where({ id: mealId }).first();
+    if (!mealIsValid) {
+      return reply.status(400).send({
+        status: "error",
+        message: "mealId not valid!",
+      })
+    }
+
+    await knex("meals").where({ id: mealId, user_id: user.id }).delete();
+
+    return reply.status(204).send()
+  });
 }
