@@ -10,6 +10,18 @@ declare module "knex/types/tables" {
       password: string,
 
       session_id: string,
+    };
+
+    meals: {
+      id: string,
+
+      name: string,
+      description: string,
+      is_in_the_diet: boolean,
+
+      user_id: string,
+
+      created_at: Date,
     }
   }
 }
