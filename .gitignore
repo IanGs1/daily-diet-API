@@ -3,8 +3,8 @@ node_modules
 
 # Environment Variables
 .env
-.test.env
-s
+.env.test
+
 # Databases
 ./database/database.db
 ./database/test-database.db

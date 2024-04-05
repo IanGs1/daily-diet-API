@@ -13,6 +13,4 @@
     "skipLibCheck": true,
     "moduleResolution": "node16"
   },
-
-  "references": ["src"],
 }
