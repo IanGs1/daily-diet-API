@@ -126,6 +126,49 @@ export async function mealRoutes(app: FastifyInstance) {
     return reply.status(200).send({
       meal: newMeal,
     })
+  });
+
+  app.get("/metrics", async (request: FastifyRequest, reply: FastifyReply) => {
+    const userSessionId = request.cookies.sessionId;
+
+    const user = await knex("users").where({ session_id: userSessionId }).first();
+    if (!user) {
+      return reply.status(400).send({
+        status: "error",
+        message: "sessionId cookie not valid!",
+      })
+    };
+
+    const meals = await knex("meals").where({ user_id: user.id });
+
+    const totalMealsRegistered = meals.length;
+    const totalMealsOnDiet = meals.filter(meal => meal.is_in_the_diet).length;
+    const totalMealsOutOfDiet = totalMealsRegistered - totalMealsOnDiet;
+
+    let i = 0;
+    const allStreaksFromMealsOnDiet: Array<number> = [];
+
+    meals.forEach((meal, mealIndex) => {
+      if (meals[mealIndex + 1] !== undefined) {
+        if (meal.is_in_the_diet && meals[mealIndex + 1].is_in_the_diet) {
+          i++
+
+          allStreaksFromMealsOnDiet.push(i + 1);
+        } else if (!meal.is_in_the_diet || !meals[mealIndex + 1].is_in_the_diet) {
+          i = 0;
+        }
+      }
+    });
+
+    const bestStreakFromMealsOnDiet = Math.max(...allStreaksFromMealsOnDiet);
+
+    return reply.status(200).send({
+      totalMealsRegistered,
+      totalMealsOnDiet,
+      totalMealsOutOfDiet,
+
+      bestStreakFromMealsOnDiet,
+    })
   })
 
   app.delete("/:mealId", async (request: FastifyRequest, reply: FastifyReply) => {
