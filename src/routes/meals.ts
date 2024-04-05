@@ -61,4 +61,33 @@ export async function mealRoutes(app: FastifyInstance) {
       meals,
     })
   });
+
+  app.get("/:mealId", async (request: FastifyRequest, reply: FastifyReply) => {
+    const showAMealSchema = z.object({
+      mealId: z.string(),
+    })
+    
+    const userSessionId = request.cookies.sessionId;
+    const { mealId } = showAMealSchema.parse(request.params);
+
+    const user = await knex("users").where({ session_id: userSessionId }).first();
+    if (!user) {
+      return reply.status(400).send({
+        status: "error",
+        message: "sessionId cookie not valid!",
+      })
+    };
+
+    const meal = await knex("meals").where({ id: mealId, user_id: user.id }).first();
+    if (!meal) {
+      return reply.status(400).send({
+        status: "error",
+        message: "mealId not valid!",
+      })
+    }
+
+    return reply.status(200).send({
+      meal,
+    })
+  });
 }
