@@ -1,0 +1,10 @@
+# Dependencies
+node_modules 
+
+# Environment Variables
+.env
+.test.env
+s
+# Databases
+./database/database.db
+./database/test-database.db
